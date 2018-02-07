@@ -10,7 +10,6 @@ api:
   - 3.0.0-ALPHA10
 
 main: Taylcd\ReportUI\ReportUI
-depend: ["FormAPI"]
 
 commands:
   report:
