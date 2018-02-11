@@ -22,12 +22,12 @@ class ReportUI extends PluginBase{
     protected $lang;
 
     /** @var Config */
-    protected $reports;
+    protected $bans;
 
     /** @var FormAPI */
     protected $FormAPI;
 
-    private $reportCache = [];
+    private $banCache = [];
     private $adminCache = [];
     private $dropdownCache = [];
 
@@ -35,7 +35,7 @@ class ReportUI extends PluginBase{
         $this->saveDefaultConfig();
         $this->saveResource('language.yml');
         $this->lang = new Config($this->getDataFolder() . 'language.yml', Config::YAML);
-        $this->reports = new Config($this->getDataFolder() . 'reports.yml', Config::YAML);
+        $this->bans = new Config($this->getDataFolder() . 'bans.yml', Config::YAML);
 
         if($this->getConfig()->get("check-update", true)){
             $this->getLogger()->info("Checking update...");
@@ -66,7 +66,7 @@ class ReportUI extends PluginBase{
         }
         $this->getServer()->getPluginManager()->registerEvents(new Listener($this), $this);
         $this->getServer()->getScheduler()->scheduleDelayedRepeatingTask(new SaveTask($this), $this->getConfig()->get('save-period', 600) * 20, $this->getConfig()->get('save-period', 600) * 20);
-        $this->getServer()->getLogger()->info(TextFormat::AQUA . 'ReportUI enabled. ' . TextFormat::GRAY . 'Made by Taylcd with ' . TextFormat::RED . "\xe2\x9d\xa4");
+        $this->getServer()->getLogger()->info(TextFormat::AQUA . 'BanUI enabled. ' . TextFormat::GRAY . 'Made by Taylcd with ' . TextFormat::RED . "\xe2\x9d\xa4");
     }
 
     public function onDisable(){
@@ -84,20 +84,20 @@ class ReportUI extends PluginBase{
      * @param string $target
      * @param string $reason
      */
-    public function addReport(string $reporter, string $target, string $reason){
+    public function addReport(string $ban, string $target, string $reason){
         $reports = $this->reports->getAll();
-        array_unshift($reports, [
-            'reporter' => $reporter,
+        array_unshift($bans, [
+            'ban' => $ban,
             'target' => $target,
             'reason' => $reason,
             'time' => time()
         ]);
-        $this->reports->setAll($reports);
+        $this->reports->setAll($bans);
 
-        if($this->getConfig()->get("enable-new-report-notification", true)){
+        if($this->getConfig()->get("enable-new-ban-notification", true)){
             foreach($this->getServer()->getOnlinePlayers() as $player){
-                if($player->hasPermission("report.admin.notification")){
-                    $player->sendMessage($this->getMessage("admin.new-report", $reporter, $target, $reason));
+                if($player->hasPermission("ban.admin.notification")){
+                    $player->sendMessage($this->getMessage("admin.new-ban", $ban, $target, $reason));
                 }
             }
         }
@@ -109,11 +109,11 @@ class ReportUI extends PluginBase{
      * @param string $search
      * @param $value
      */
-    public function deleteReport(string $search, $value){
+    public function removeBan(string $search, $value){
         if($search == "id"){
-            $reports = $this->reports->getAll();
+            $bans = $this->ban->getAll();
             array_splice($reports, $value, 1);
-            $this->reports->setAll($reports);
+            $this->bans->setAll($bans);
         }else{
             $reports = $this->reports->getAll();
             for($i = 0; $i < count($reports); $i ++){
@@ -156,12 +156,12 @@ class ReportUI extends PluginBase{
             return true;
         }
         switch($command->getName()){
-            case 'report':
+            case 'vmtban':
                 if(!isset($args[0])) unset($this->reportCache[$sender->getName()]);
                 else $this->reportCache[$sender->getName()] = $args[0];
                 $this->sendReportGUI($sender);
                 return true;
-            case 'reportadmin':
+            case 'banadmin':
                 $this->sendAdminGUI($sender);
         }
         return true;
@@ -211,7 +211,7 @@ class ReportUI extends PluginBase{
             return;
         }
         if(strtolower($name) == strtolower($sender->getName())){
-            $sender->sendMessage($this->getMessage('gui.cant-report-self'));
+            $sender->sendMessage($this->getMessage('gui.cant-ban-self'));
             return;
         }
         if($this->getServer()->getOfflinePlayer($this->reportCache[$sender->getName()])->isOp() && !$this->getConfig()->get('allow-reporting-ops')){
@@ -240,7 +240,7 @@ class ReportUI extends PluginBase{
                         return;
                     }
                     $this->addReport($sender->getName(), $this->reportCache[$sender->getName()], $data[1]);
-                    $sender->sendMessage($this->getMessage('report.successful', $this->reportCache[$sender->getName()], $data[1]));
+                    $sender->sendMessage($this->getMessage('ban.successful', $this->reportCache[$sender->getName()], $data[1]));
                 });
                 $form->setTitle($this->getMessage('gui.title'));
                 $form->addLabel($this->getMessage('gui.custom.label', $this->reportCache[$sender->getName()]));
@@ -349,7 +349,7 @@ class ReportUI extends PluginBase{
                             $sender->sendMessage($this->getMessage('gui.player-not-found'));
                             return;
                         }
-                        $this->deleteReport("reporter", $data[1]);
+                        $this->deleteReport("ban", $data[1]);
                         $sender->sendMessage($this->getMessage('admin.deleted-by-reporter', $data[1]));
                     });
 
