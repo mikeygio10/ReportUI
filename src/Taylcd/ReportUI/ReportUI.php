@@ -300,7 +300,7 @@ class ReportUI extends PluginBase{
                                 case 2:
                                     $this->getServer()->getPluginManager()->callEvent($ev = new ReportProcessedEvent($report['target'], $report['reason'], ReportProcessedEvent::PROCESS_TYPE_BAN));
                                     if(!$ev->isCancelled()){
-                                        if(($player = $this->getServer()->getOfflinePlayer($report['target'])) !== null) $player->setBanned(true);
+                                        if(($player = $this->getServer()->getOfflinePlayer($report['target'])) !== null) $this->getServer()->getCommandMap()->dispatchCommand($sender, 'mban "' . $player->getName() . '"');
                                         $this->deleteReport("target", $report['target']);
                                         $sender->sendMessage($this->getMessage('admin.banned', $report['target']));
                                     }
